@@ -54,18 +54,24 @@ class _HistorialConductorState extends State<HistorialConductor>
   }
 
   void _toggleToast() {
+    if (!mounted) return; // Verificar si el widget está montado
+    
     if (_showToast) {
       // Si está visible, ocultarlo
       _animationController.reverse().then((_) {
+        if (!mounted) return; // Verificar antes de setState
         setState(() {
           _showToast = false;
         });
         
         Timer(const Duration(seconds: 3), () {
+          if (!mounted) return; // Verificar antes de setState
           setState(() {
             _showToast = true;
           });
-          _animationController.forward();
+          if (mounted) {
+            _animationController.forward();
+          }
         });
       });
     } else {
@@ -85,6 +91,8 @@ class _HistorialConductorState extends State<HistorialConductor>
   }
 
   Future<void> _cargarDatosConductor() async {
+    if (!mounted) return; // Verificar si está montado
+    
     setState(() {
       _isLoading = true;
       _error = '';
@@ -97,11 +105,13 @@ class _HistorialConductorState extends State<HistorialConductor>
       // Obtener transacciones donde el conductor fue el chofer
       final transacciones = await DatabaseService.getTransaccionesByConductor(conductorId);
 
+      if (!mounted) return; // Verificar antes de setState
       setState(() {
         _transacciones = transacciones;
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return; // Verificar antes de setState
       setState(() {
         _error = 'Error cargando datos: $e';
         _isLoading = false;
@@ -115,6 +125,7 @@ class _HistorialConductorState extends State<HistorialConductor>
       appBar: AppBar(
         title: const Text('Últimos Pagos Realizados'),
         centerTitle: true,
+        automaticallyImplyLeading: false, // Quita la flecha de retroceso
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -468,7 +479,21 @@ class _HistorialConductorState extends State<HistorialConductor>
                 fontWeight: FontWeight.w600,
               ),
             ),
-         
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: statusColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                statusText,
+                style: TextStyle(
+                  color: Colors.grey[800],
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 8),

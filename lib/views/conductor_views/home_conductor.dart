@@ -67,13 +67,13 @@ class _HomeConductorState extends State<HomeConductor> {
       appBar: AppBar(
         centerTitle: true,
         title: Text(
-          'Hola, Conductor',
+          'Hola xd',
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
           ),
         ),
-       
+        automaticallyImplyLeading: false, // Quita la flecha de retroceso
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -84,8 +84,6 @@ class _HomeConductorState extends State<HomeConductor> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Estado del servicio
-                      _buildEstadoServicio(),
                       const SizedBox(height: 20),
                       
                       // Información del micro
@@ -166,57 +164,7 @@ class _HomeConductorState extends State<HomeConductor> {
           ),
         ],
       ),
-      child: Column(
-        children: [
-          Icon(
-            _estaEnServicio ? Icons.play_circle_fill : Icons.pause_circle_filled,
-            size: 48,
-            color: Colors.white,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            _estaEnServicio ? 'EN SERVICIO' : 'FUERA DE SERVICIO',
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _estaEnServicio 
-              ? 'Los pasajeros pueden verte' 
-              : 'Inicia servicio para recibir pasajeros',
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.white70,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _toggleServicio,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: _estaEnServicio ? Colors.green[600] : Colors.grey[600],
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(
-                _estaEnServicio ? 'Pausar Servicio' : 'Iniciar Servicio',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+    
     );
   }
 
@@ -278,19 +226,7 @@ class _HomeConductorState extends State<HomeConductor> {
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue[100],
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.directions_bus,
-                  size: 32,
-                  color: Colors.blue[700],
-                ),
-              ),
-              const SizedBox(width: 16),
+          
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

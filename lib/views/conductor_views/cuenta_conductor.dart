@@ -10,6 +10,7 @@ class CuentaConductor extends StatelessWidget {
         title: const Text('Mi Cuenta'),
         backgroundColor: Colors.blue[700],
         foregroundColor: Colors.white,
+        automaticallyImplyLeading: false, // Quita la flecha de retroceso
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -118,22 +119,8 @@ class CuentaConductor extends StatelessWidget {
             const SizedBox(height: 20),
             
             // Opciones específicas del conductor
-            _buildAccountOption(
-              icon: Icons.directions_bus,
-              title: 'Mi Micro',
-              subtitle: 'Información del vehículo asignado',
-              onTap: () {
-                // Navegar a información del micro
-              },
-            ),
-            _buildAccountOption(
-              icon: Icons.assessment,
-              title: 'Reportes',
-              subtitle: 'Estadísticas de ingresos y viajes',
-              onTap: () {
-                // Navegar a reportes detallados
-              },
-            ),
+        
+        
             _buildAccountOption(
               icon: Icons.schedule,
               title: 'Horarios',
@@ -158,22 +145,7 @@ class CuentaConductor extends StatelessWidget {
                 // Navegar a configuración de seguridad
               },
             ),
-            _buildAccountOption(
-              icon: Icons.notifications,
-              title: 'Notificaciones',
-              subtitle: 'Configurar alertas de trabajo',
-              onTap: () {
-                // Navegar a configuración de notificaciones
-              },
-            ),
-            _buildAccountOption(
-              icon: Icons.info,
-              title: 'Acerca de',
-              subtitle: 'Versión y términos',
-              onTap: () {
-                // Navegar a información de la app
-              },
-            ),
+        
             const SizedBox(height: 20),
             
             // Botón de cerrar sesión
