@@ -1,6 +1,7 @@
 import 'package:mysql_client/mysql_client.dart';
 import '../config/database_config.dart';
 import '../models/micro.dart';
+import '../models/transaction.dart';
 
 class DatabaseService {
   static MySQLConnection? _connection;
@@ -82,6 +83,228 @@ class DatabaseService {
     } catch (e) {
       print('Error obteniendo micro por ID: $e');
       return null;
+    }
+  }
+
+  // Obtener usuario por email
+  static Future<dynamic> getUserByEmail(String email) async {
+    try {
+      final conn = await _getConnection();
+      final results = await conn.execute(
+        'SELECT * FROM usuarios WHERE email = :email',
+        {'email': email}
+      );
+      
+      if (results.rows.isNotEmpty) {
+        return results.rows.first.assoc();
+      }
+      return null;
+    } catch (e) {
+      print('Error obteniendo usuario por email: $e');
+      return null;
+    }
+  }
+
+  // Obtener chofer por teléfono
+  static Future<dynamic> getChoferByTelefono(String telefono) async {
+    try {
+      final conn = await _getConnection();
+      final results = await conn.execute(
+        'SELECT * FROM choferes WHERE telefono = :telefono',
+        {'telefono': telefono}
+      );
+      
+      if (results.rows.isNotEmpty) {
+        return results.rows.first.assoc();
+      }
+      return null;
+    } catch (e) {
+      print('Error obteniendo chofer por teléfono: $e');
+      throw Exception('Error obteniendo chofer por teléfono: $e');
+    }
+  }
+
+  // Obtener por usuarioId
+  static Future<List<Transaction>> getTransaccionesByUsuario(int usuarioId) async {
+    try {
+      final conn = await _getConnection();
+      final results = await conn.execute(
+        '''
+           SELECT * FROM transacciones 
+           WHERE usuario_id = :usuarioId 
+           ORDER BY fecha_transaccion DESC
+        ''',
+        {'usuarioId': usuarioId}
+      );
+
+      print("resul:   ",  );
+
+      
+      return results.rows.map((row) => Transaction.fromMap(row.assoc())).toList();
+   
+   
+   
+    } catch (e) {
+      print('Error obteniendo transacciones del usuario: $e');
+      throw Exception('Error obteniendo transacciones: $e');
+    }
+  }
+
+  // Obtener transacciones recientes de un usuario (últimas N transacciones)
+  static Future<List<Transaction>> getTransaccionesRecientes(int usuarioId, {int limite = 10}) async {
+    try {
+      final conn = await _getConnection();
+      final results = await conn.execute(
+        '''SELECT id, usuario_id, chofer_id, micro_id, monto, tipo_pago, 
+                  metodo_deteccion, fecha_transaccion, estado 
+           FROM transacciones 
+           WHERE usuario_id = :usuarioId 
+           ORDER BY fecha_transaccion DESC 
+           LIMIT :limite''',
+        {'usuarioId': usuarioId, 'limite': limite}
+      );
+      
+      return results.rows.map((row) => Transaction.fromMap(row.assoc())).toList();
+    } catch (e) {
+      print('Error obteniendo transacciones recientes: $e');
+      return [];
+    }
+  }
+
+  // Obtener transacciones por rango de fechas
+  static Future<List<Transaction>> getTransaccionesByFecha(
+    int usuarioId, 
+    DateTime fechaInicio, 
+    DateTime fechaFin
+  ) async {
+    try {
+      final conn = await _getConnection();
+      final results = await conn.execute(
+        '''SELECT id, usuario_id, chofer_id, micro_id, monto, tipo_pago, 
+                  metodo_deteccion, fecha_transaccion, estado 
+           FROM transacciones 
+           WHERE usuario_id = :usuarioId 
+           AND fecha_transaccion BETWEEN :fechaInicio AND :fechaFin
+           ORDER BY fecha_transaccion DESC''',
+        {
+          'usuarioId': usuarioId,
+          'fechaInicio': fechaInicio.toIso8601String(),
+          'fechaFin': fechaFin.toIso8601String()
+        }
+      );
+      
+      return results.rows.map((row) => Transaction.fromMap(row.assoc())).toList();
+    } catch (e) {
+      print('Error obteniendo transacciones por fecha: $e');
+      return [];
+    }
+  }
+
+  // Obtener estadísticas de transacciones del usuario
+  static Future<Map<String, dynamic>> getEstadisticasUsuario(int usuarioId) async {
+    try {
+      final conn = await _getConnection();
+      final results = await conn.execute(
+        '''SELECT 
+             COUNT(*) as total_transacciones,
+             SUM(CASE WHEN tipo_pago = 'normal' THEN monto ELSE 0 END) as total_gastado,
+             COUNT(CASE WHEN tipo_pago LIKE '%gratis%' THEN 1 END) as viajes_gratis_usados,
+             COUNT(CASE WHEN estado = 'completado' THEN 1 END) as viajes_completados
+           FROM transacciones 
+           WHERE usuario_id = :usuarioId''',
+        {'usuarioId': usuarioId}
+      );
+      
+      if (results.rows.isNotEmpty) {
+        final row = results.rows.first.assoc();
+        return {
+          'totalTransacciones': int.tryParse(row['total_transacciones']?.toString() ?? '0') ?? 0,
+          'totalGastado': double.tryParse(row['total_gastado']?.toString() ?? '0.0') ?? 0.0,
+          'viajesGratisUsados': int.tryParse(row['viajes_gratis_usados']?.toString() ?? '0') ?? 0,
+          'viajesCompletados': int.tryParse(row['viajes_completados']?.toString() ?? '0') ?? 0,
+        };
+      }
+      
+      return {
+        'totalTransacciones': 0,
+        'totalGastado': 0.0,
+        'viajesGratisUsados': 0,
+        'viajesCompletados': 0,
+      };
+    } catch (e) {
+      print('Error obteniendo estadísticas del usuario: $e');
+      return {
+        'totalTransacciones': 0,
+        'totalGastado': 0.0,
+        'viajesGratisUsados': 0,
+        'viajesCompletados': 0,
+      };
+    }
+  }
+
+  // Obtener transacciones por conductor (chofer_id)
+  static Future<List<Transaction>> getTransaccionesByConductor(int choferId) async {
+    try {
+      final conn = await _getConnection();
+      final results = await conn.execute(
+        '''SELECT id, usuario_id, chofer_id, micro_id, monto, tipo_pago, 
+                  metodo_deteccion, fecha_transaccion, estado 
+           FROM transacciones 
+           WHERE chofer_id = :choferId 
+           ORDER BY fecha_transaccion DESC''',
+        {'choferId': choferId}
+      );
+      
+      return results.rows.map((row) => Transaction.fromMap(row.assoc())).toList();
+    } catch (e) {
+      print('Error obteniendo transacciones del conductor: $e');
+      return [];
+    }
+  }
+
+  // Obtener estadísticas del conductor
+  static Future<Map<String, dynamic>> getEstadisticasConductor(int choferId) async {
+    try {
+      final conn = await _getConnection();
+      final results = await conn.execute(
+        '''SELECT 
+             COUNT(*) as total_viajes,
+             SUM(CASE WHEN tipo_pago = 'normal' THEN monto ELSE 0 END) as total_ingresos,
+             COUNT(CASE WHEN tipo_pago LIKE '%gratis%' THEN 1 END) as viajes_gratis,
+             COUNT(CASE WHEN estado = 'completado' THEN 1 END) as viajes_completados,
+             COUNT(DISTINCT usuario_id) as pasajeros_unicos
+           FROM transacciones 
+           WHERE chofer_id = :choferId''',
+        {'choferId': choferId}
+      );
+      
+      if (results.rows.isNotEmpty) {
+        final row = results.rows.first.assoc();
+        return {
+          'totalViajes': int.tryParse(row['total_viajes']?.toString() ?? '0') ?? 0,
+          'totalIngresos': double.tryParse(row['total_ingresos']?.toString() ?? '0.0') ?? 0.0,
+          'viajesGratis': int.tryParse(row['viajes_gratis']?.toString() ?? '0') ?? 0,
+          'viajesCompletados': int.tryParse(row['viajes_completados']?.toString() ?? '0') ?? 0,
+          'pasajerosUnicos': int.tryParse(row['pasajeros_unicos']?.toString() ?? '0') ?? 0,
+        };
+      }
+      
+      return {
+        'totalViajes': 0,
+        'totalIngresos': 0.0,
+        'viajesGratis': 0,
+        'viajesCompletados': 0,
+        'pasajerosUnicos': 0,
+      };
+    } catch (e) {
+      print('Error obteniendo estadísticas del conductor: $e');
+      return {
+        'totalViajes': 0,
+        'totalIngresos': 0.0,
+        'viajesGratis': 0,
+        'viajesCompletados': 0,
+        'pasajerosUnicos': 0,
+      };
     }
   }
 

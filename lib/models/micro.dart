@@ -20,7 +20,7 @@ class Micro {
   // Crear desde Map (resultado de consulta SQL)
   factory Micro.fromMap(Map<String, dynamic> map) {
     return Micro(
-      id: int.tryParse(map['id'].toString()) ?? 0,
+        id: int.tryParse(map['id'].toString()) ?? 0,
       numeroMicro: map['numero_micro']?.toString() ?? '',
       linea: int.tryParse(map['linea'].toString()) ?? 0,
       rutaDescripcion: map['ruta_descripcion']?.toString() ?? '',

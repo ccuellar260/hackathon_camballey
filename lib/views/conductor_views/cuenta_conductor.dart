@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
-import '../../controllers/login_controller.dart';
 
-class CuentaPasajero extends StatelessWidget {
-  const CuentaPasajero({super.key});
+class CuentaConductor extends StatelessWidget {
+  const CuentaConductor({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   title: const Text('Mi Cuenta'),
-      //   backgroundColor: Colors.blue[700],
-      //   foregroundColor: Colors.white,
-      // ),
+      appBar: AppBar(
+        title: const Text('Mi Cuenta'),
+        backgroundColor: Colors.blue[700],
+        foregroundColor: Colors.white,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Perfil del usuario
+            // Perfil del conductor
             const CircleAvatar(
               radius: 50,
               backgroundColor: Colors.grey,
@@ -28,18 +27,14 @@ class CuentaPasajero extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              LoginController.instance.userName.isNotEmpty 
-                  ? LoginController.instance.userName 
-                  : 'Usuario',
+              'Juan Conductor',
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
             Text(
-              LoginController.instance.userEmail.isNotEmpty 
-                  ? LoginController.instance.userEmail 
-                  : 'email@ejemplo.com',
+              'conductor@ejemplo.com',
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.grey,
@@ -49,21 +44,21 @@ class CuentaPasajero extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.green[100],
+                color: Colors.blue[100],
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                'PASAJERO',
+                'CONDUCTOR',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: Colors.green[700],
+                  color: Colors.blue[700],
                 ),
               ),
             ),
             const SizedBox(height: 30),
             
-            // Información del usuario
+            // Información del conductor
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -77,7 +72,7 @@ class CuentaPasajero extends StatelessWidget {
                   Column(
                     children: [
                       Text(
-                        'Bs. ${LoginController.instance.userBalance.toStringAsFixed(2)}',
+                        'Bs. 2500.00',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -101,7 +96,7 @@ class CuentaPasajero extends StatelessWidget {
                   Column(
                     children: [
                       Text(
-                        '${LoginController.instance.userTrips}',
+                        '25',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -122,39 +117,63 @@ class CuentaPasajero extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             
-            // Opciones de cuenta
-            
+            // Opciones específicas del conductor
+            _buildAccountOption(
+              icon: Icons.directions_bus,
+              title: 'Mi Micro',
+              subtitle: 'Información del vehículo asignado',
+              onTap: () {
+                // Navegar a información del micro
+              },
+            ),
+            _buildAccountOption(
+              icon: Icons.assessment,
+              title: 'Reportes',
+              subtitle: 'Estadísticas de ingresos y viajes',
+              onTap: () {
+                // Navegar a reportes detallados
+              },
+            ),
+            _buildAccountOption(
+              icon: Icons.schedule,
+              title: 'Horarios',
+              subtitle: 'Gestionar turnos y horarios',
+              onTap: () {
+                // Navegar a gestión de horarios
+              },
+            ),
+            _buildAccountOption(
+              icon: Icons.support_agent,
+              title: 'Soporte Conductor',
+              subtitle: 'Ayuda específica para conductores',
+              onTap: () {
+                // Navegar a soporte
+              },
+            ),
             _buildAccountOption(
               icon: Icons.security,
               title: 'Seguridad',
               subtitle: 'PIN, biometría y verificación',
-              onTap: () {},
+              onTap: () {
+                // Navegar a configuración de seguridad
+              },
             ),
             _buildAccountOption(
               icon: Icons.notifications,
               title: 'Notificaciones',
-              subtitle: 'Configurar alertas y avisos',
-              onTap: () {},
-            ),
-            _buildAccountOption(
-              icon: Icons.help,
-              title: 'Ayuda y soporte',
-              subtitle: 'FAQ y contacto',
-              onTap: () {},
+              subtitle: 'Configurar alertas de trabajo',
+              onTap: () {
+                // Navegar a configuración de notificaciones
+              },
             ),
             _buildAccountOption(
               icon: Icons.info,
               title: 'Acerca de',
               subtitle: 'Versión y términos',
-              onTap: () {},
+              onTap: () {
+                // Navegar a información de la app
+              },
             ),
-
-            //  _buildAccountOption(
-            //   icon: Icons.info,
-            //   title: 'Cambiar a modo conductor',
-            //   subtitle: 'CAmbiar a modo conductor',
-            //   onTap: () {},
-            // ),
             const SizedBox(height: 20),
             
             // Botón de cerrar sesión
@@ -218,14 +237,11 @@ class CuentaPasajero extends StatelessWidget {
             ),
             ElevatedButton(
               onPressed: () {
-                // Limpiar sesión
-                LoginController.instance.logout();
-                
                 // Cerrar diálogo y navegar al login
                 Navigator.of(context).pop();
                 Navigator.pushNamedAndRemoveUntil(
                   context, 
-                  'login', 
+                  'login_chofer', 
                   (route) => false,
                 );
               },

@@ -19,7 +19,8 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       routes: getRoutes(),
-      initialRoute: 'dashboard',
+      // initialRoute: 'dashboard',
+      initialRoute: 'login',
     );
 }
 }
