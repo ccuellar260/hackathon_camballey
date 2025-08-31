@@ -8,6 +8,7 @@ class Transaction {
   final String metodoDeteccion;
   final DateTime fechaTransaccion;
   final String estado;
+  final String? nombre; // Propiedad nullable para el nombre del usuario
 
   Transaction({
     required this.id,
@@ -19,6 +20,7 @@ class Transaction {
     required this.metodoDeteccion,
     required this.fechaTransaccion,
     required this.estado,
+    this.nombre, // Parámetro opcional nullable
   });
 
   // Crear desde Map (resultado de consulta SQL)
@@ -33,6 +35,7 @@ class Transaction {
       metodoDeteccion: map['metodo_deteccion']?.toString() ?? '',
       fechaTransaccion: DateTime.tryParse(map['fecha_transaccion']?.toString() ?? '') ?? DateTime.now(),
       estado: map['estado']?.toString() ?? '',
+      nombre: map['nombre']?.toString(), // Puede ser null
     );
   }
 
@@ -48,6 +51,7 @@ class Transaction {
       'metodo_deteccion': metodoDeteccion,
       'fecha_transaccion': fechaTransaccion.toIso8601String(),
       'estado': estado,
+      'nombre': nombre, // Puede ser null
     };
   }
 
@@ -59,6 +63,14 @@ class Transaction {
 
   // Verificar si es pago normal
   bool get esPagoNormal => tipoPago.toLowerCase().contains('normal') && monto > 0.0;
+
+  // Obtener nombre para mostrar (con fallback)
+  String get nombreParaMostrar {
+    if (nombre != null && nombre!.isNotEmpty) {
+      return nombre!;
+    }
+    return 'Usuario $usuarioId';
+  }
 
   // Formatear fecha para mostrar
   String get fechaFormateada {

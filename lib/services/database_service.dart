@@ -242,18 +242,24 @@ class DatabaseService {
     }
   }
 
-  // Obtener transacciones por conductor (chofer_id)
+ 
   static Future<List<Transaction>> getTransaccionesByConductor(int choferId) async {
     try {
       final conn = await _getConnection();
       final results = await conn.execute(
-        '''SELECT id, usuario_id, chofer_id, micro_id, monto, tipo_pago, 
-                  metodo_deteccion, fecha_transaccion, estado 
-           FROM transacciones 
-           WHERE chofer_id = :choferId 
-           ORDER BY fecha_transaccion DESC''',
+        '''SELECT t.id, t.usuario_id, t.chofer_id, t.micro_id, t.monto, t.tipo_pago, 
+                  t.metodo_deteccion, t.fecha_transaccion, t.estado, u.nombre 
+           FROM transacciones t
+           LEFT JOIN usuarios u ON t.usuario_id = u.id
+           WHERE t.chofer_id = :choferId 
+           ORDER BY t.fecha_transaccion DESC''',
+
+
+
         {'choferId': choferId}
       );
+
+      print(""  );
       
       return results.rows.map((row) => Transaction.fromMap(row.assoc())).toList();
     } catch (e) {
@@ -262,7 +268,6 @@ class DatabaseService {
     }
   }
 
-  // Obtener estadísticas del conductor
   static Future<Map<String, dynamic>> getEstadisticasConductor(int choferId) async {
     try {
       final conn = await _getConnection();
@@ -305,6 +310,50 @@ class DatabaseService {
         'viajesCompletados': 0,
         'pasajerosUnicos': 0,
       };
+    }
+  }
+
+  // Insertar nueva transacción
+  static Future<bool> insertarTransaccion({
+    required int usuarioId,
+    required int microId,
+    required double monto,
+  }) async {
+    try {
+      final conn = await _getConnection();
+      
+      const query = '''
+        INSERT INTO transacciones (
+          usuario_id, 
+          chofer_id, 
+          micro_id, 
+          monto, 
+          tipo_pago, 
+          metodo_deteccion, 
+          fecha_transaccion, 
+          estado
+        ) VALUES (:usuarioId, :choferId, :microId, :monto, :tipoPago, :metodoDeteccion, NOW(), :estado)
+      ''';
+      
+      final result = await conn.execute(
+        query,
+        {
+          'usuarioId': usuarioId,
+          'choferId': 1, // choferId fijo
+          'microId': microId,
+          'monto': monto,
+          'tipoPago': 'normal', // tipoPago
+          'metodoDeteccion': '00:11:22:33:44:55', // metodoDeteccion (MAC address)
+          'estado': 'completado', // estado
+        },
+      );
+      
+      print('==> Transacción insertada exitosamente. ID: ${result.lastInsertID}');
+      return true;
+      
+    } catch (e) {
+      print('Error insertando transacción: $e');
+      return false;
     }
   }
 

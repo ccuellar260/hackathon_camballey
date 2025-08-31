@@ -471,12 +471,15 @@ class _HistorialConductorState extends State<HistorialConductor>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Usuario ${ultimaTransaccion.usuarioId}',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+            Expanded(
+              child: Text(
+                ultimaTransaccion.nombreParaMostrar,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             Container(
@@ -559,7 +562,15 @@ class _HistorialConductorState extends State<HistorialConductor>
           backgroundColor: amountColor.withOpacity(0.1),
           child: Icon(icon, color: amountColor),
         ),
-        title: Text('Usuario ${transaction.usuarioId} - ${transaction.tipoPago}'),
+        title: Text(
+          '${transaction.nombreParaMostrar} - ${transaction.tipoPago}',
+          style: const TextStyle(fontWeight: FontWeight.w600),
+
+
+
+
+          
+        ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -19,7 +19,6 @@ class _HomePasajeroState extends State<HomePasajero> {
   bool _isPaymentProcessing = false; // Para evitar múltiples pagos
   List<Micro> _nearbyMicros = []; // Lista de micros desde base de datos
   List<Micro> _allMicros = []; // Lista completa de micros disponibles
-  bool _isLoading = true; // Estado de carga
   bool _isDetecting = false; // Estado de detección de micros
   Timer? _detectionTimer; // Timer para la simulación
 
@@ -36,16 +35,11 @@ class _HomePasajeroState extends State<HomePasajero> {
   }
 
   Future<void> _loadAllMicros() async {
-    setState(() {
-      _isLoading = true;
-    });
-    
     try {
       final micros = await DatabaseService.getMicrosActivos();
       print("===> Micros cargados: $micros");
       setState(() {
         _allMicros = micros;
-        _isLoading = false;
       });
       
       // Iniciar simulación de detección
@@ -54,7 +48,6 @@ class _HomePasajeroState extends State<HomePasajero> {
       print('==> Error cargando micros: $e');
       setState(() {
         _allMicros = [];
-        _isLoading = false;
       });
     }
   }
@@ -188,9 +181,11 @@ class _HomePasajeroState extends State<HomePasajero> {
   }
 
   void _onSliderUpdate(double position) {
+    if (_isPaymentProcessing) return; // No permitir cambios si ya se está procesando
+    
     setState(() {
       _sliderPosition = position;
-      _isSliderCompleted = position >= 0.9; // 90% del camino
+      _isSliderCompleted = position >= 0.65; // Reducir a 85% para que sea más fácil
     });
     
     // Si se completó el deslizamiento y no se está procesando ya, mostrar toast y procesar pago
@@ -239,15 +234,66 @@ class _HomePasajeroState extends State<HomePasajero> {
       });
     });
     
-    // Aquí se agregará más lógica para guardar la transacción en la base de datos
+    // Guardar transacción en la base de datos
+    try {
+      final usuarioId = LoginController.instance.currentUser?.id;
+      
+      if (usuarioId != null) {
+        final exito = await DatabaseService.insertarTransaccion(
+          usuarioId: usuarioId,
+          microId: microSeleccionado.id,
+          monto: microSeleccionado.tarifa,
+        );
+        
+        if (exito) {
+          print('==> Transacción guardada exitosamente en la BD');
+        } else {
+          print('==> Error al guardar la transacción en la BD');
+          // Mostrar mensaje de error al usuario
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Row(
+                  children: [
+                    Icon(Icons.warning, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text('Error al registrar el pago. Contacta soporte.'),
+                  ],
+                ),
+                backgroundColor: Colors.orange[600],
+                duration: const Duration(seconds: 5),
+              ),
+            );
+          }
+        }
+      } else {
+        print('==> Error: No hay usuario logueado');
+      }
+    } catch (e) {
+      print('==> Error guardando transacción: $e');
+    }
+    
     print('==> Pago procesado para micro: ${microSeleccionado.numeroMicro}, tarifa: ${microSeleccionado.tarifa}');
   }
 
   void _resetSlider() {
-    setState(() {
-      _sliderPosition = 0.0;
-      _isSliderCompleted = false;
-    });
+    // Animación suave de retorno al inicio
+    const steps = 10;
+    const stepDuration = Duration(milliseconds: 30);
+    
+    for (int i = 1; i <= steps; i++) {
+      Future.delayed(stepDuration * i, () {
+        if (mounted) {
+          setState(() {
+            _sliderPosition = _sliderPosition * (1 - i / steps);
+            if (i == steps) {
+              _sliderPosition = 0.0;
+              _isSliderCompleted = false;
+            }
+          });
+        }
+      });
+    }
   }
 
   @override
@@ -543,19 +589,39 @@ class _HomePasajeroState extends State<HomePasajero> {
   Widget _buildSliderToPay() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final maxWidth = constraints.maxWidth - 56; // Ancho disponible para deslizar
+        final maxWidth = constraints.maxWidth - 64; // Más espacio para el botón
         final buttonPosition = _sliderPosition * maxWidth;
         
-        return Stack(
-          children: [
-            // Fondo del slider
-            Container(
-              height: 56,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(50),
+        return Container(
+          height: 60, // Aumentar altura para mejor área de toque
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Stack(
+            children: [
+              // Fondo del slider con progreso
+              Container(
+                height: 60,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(30),
+                  child: LinearProgressIndicator(
+                    value: _sliderPosition,
+                    backgroundColor: Colors.transparent,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      _isSliderCompleted 
+                        ? Colors.green.withOpacity(0.3)
+                        : Colors.white.withOpacity(0.1)
+                    ),
+                  ),
+                ),
               ),
-              child: Center(
+              // Texto del slider
+              Center(
                 child: Text(
                   _isSliderCompleted 
                       ? '¡Confirmado! Procesando...'
@@ -563,49 +629,65 @@ class _HomePasajeroState extends State<HomePasajero> {
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: _isSliderCompleted ? 14 : 16,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
-            ),
-            // Botón deslizante
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 200),
-              left: buttonPosition + 4,
-              top: 4,
-              child: GestureDetector(
-                onPanUpdate: (details) {
-                  final newPosition = (buttonPosition + details.delta.dx) / maxWidth;
-                  _onSliderUpdate(newPosition.clamp(0.0, 1.0));
-                },
-                onPanEnd: (details) {
-                  if (!_isSliderCompleted) {
-                    _resetSlider(); // Volver al inicio si no se completó
-                  }
-                },
-                child: Container(
-                  height: 48,
-                  width: 48,
-                  decoration: BoxDecoration(
-                    color: _isSliderCompleted ? Colors.green : Colors.white,
-                    borderRadius: BorderRadius.circular(50),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    _isSliderCompleted ? Icons.check : Icons.arrow_forward,
-                    color: _isSliderCompleted ? Colors.white : Colors.blue[700],
-                    size: 24,
+              // Botón deslizante mejorado
+              AnimatedPositioned(
+                duration: Duration(milliseconds: _isSliderCompleted ? 300 : 100),
+                left: buttonPosition + 4,
+                top: 4,
+                child: GestureDetector(
+                  onPanStart: (details) {
+                    // Agregar feedback háptico al iniciar
+                    // HapticFeedback.lightImpact();
+                  },
+                  onPanUpdate: (details) {
+                    if (_isPaymentProcessing) return;
+                    
+                    // Calcular nueva posición basada en el movimiento del dedo
+                    final RenderBox renderBox = context.findRenderObject() as RenderBox;
+                    final localPosition = renderBox.globalToLocal(details.globalPosition);
+                    final newPosition = (localPosition.dx - 32) / maxWidth; // Centrar en el botón
+                    
+                    _onSliderUpdate(newPosition.clamp(0.0, 1.0));
+                  },
+                  onPanEnd: (details) {
+                    if (!_isSliderCompleted && !_isPaymentProcessing) {
+                      // Animación de retorno más suave
+                      _resetSlider();
+                    }
+                  },
+                  child: Container(
+                    height: 52,
+                    width: 52,
+                    decoration: BoxDecoration(
+                      color: _isSliderCompleted ? Colors.green[600] : Colors.white,
+                      borderRadius: BorderRadius.circular(26),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                        BoxShadow(
+                          color: Colors.white.withOpacity(0.1),
+                          blurRadius: 2,
+                          offset: const Offset(0, -1),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      _isSliderCompleted ? Icons.check : Icons.arrow_forward,
+                      color: _isSliderCompleted ? Colors.white : Colors.blue[700],
+                      size: 26,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
@@ -614,20 +696,44 @@ class _HomePasajeroState extends State<HomePasajero> {
   // Slider deshabilitado
   Widget _buildDisabledSlider() {
     return Container(
-      height: 56,
+      height: 60,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(50),
-      ),
-      child: const Center(
-        child: Text(
-          'Selecciona un micro primero',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
         ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            margin: const EdgeInsets.all(4),
+            height: 52,
+            width: 52,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(26),
+            ),
+            child: Icon(
+              Icons.lock,
+              color: Colors.white.withOpacity(0.7),
+              size: 24,
+            ),
+          ),
+          Expanded(
+            child: Center(
+              child: Text(
+                'Selecciona un micro primero',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.7),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

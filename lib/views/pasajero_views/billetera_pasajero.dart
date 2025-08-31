@@ -78,13 +78,7 @@ class BilleteraPasajero extends StatelessWidget {
                         size: 16,
                       ),
                       const SizedBox(width: 8),
-                      const Text(
-                        'Tigo Billetera Digital',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                        ),
-                      ),
+                     
                     ],
                   ),
                 ],
@@ -188,7 +182,7 @@ class BilleteraPasajero extends StatelessWidget {
               isDebit: true,
             ),
             _buildTransactionItem(
-              title: 'Recarga Tigo Money',
+              title: 'Recarga',
               amount: '+ Bs. 50.00',
               date: 'Ayer, 12:15',
               icon: Icons.add_circle,
