@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hackathon_camballey/views/pasajero_views/cuenta_pasajero.dart';
 import 'package:hackathon_camballey/views/pasajero_views/home_pasajero.dart';
-import 'package:hackathon_camballey/views/pasajero_views/pagos_pasajero.dart';
+import 'package:hackathon_camballey/views/pasajero_views/historial_pasajero.dart';
+import 'package:hackathon_camballey/views/pasajero_views/billetera_pasajero.dart';
 
 class NabavarPasajero extends StatefulWidget {
   const NabavarPasajero({super.key});
@@ -15,7 +16,8 @@ class _NabavarPasajeroState extends State<NabavarPasajero> {
 
   final List<Widget> _views = [
     const HomePasajero(),
-    const PagosPasajero(),
+    const HistorialPasajero(),
+    const BilleteraPasajero(),
     const CuentaPasajero(),
   ];
 
@@ -39,9 +41,14 @@ class _NabavarPasajeroState extends State<NabavarPasajero> {
             label: 'Inicio',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.payment),
-            label: 'Pagos',
+            icon: Icon(Icons.history),
+            label: 'Historial',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_balance_wallet),
+            label: 'Billetera',
+          ),
+          
           BottomNavigationBarItem(
             icon: Icon(Icons.account_circle),
             label: 'Cuenta',
