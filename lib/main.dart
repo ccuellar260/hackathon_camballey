@@ -8,17 +8,16 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'PayMov',
-      // theme: ThemeData(
-      //   colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      //   useMaterial3: true,
-      // ),
-      // home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      theme: ThemeData(
+        // colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 12, 67, 145)),
+        
+        useMaterial3: true,
+      ),
       routes: getRoutes(),
       initialRoute: 'dashboard',
     );
